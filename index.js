@@ -17,11 +17,8 @@ require("dotenv").config();
 // mongodb
 const { MongoClient, ServerApiVersion } = require("mongodb");
 
-// step 2 create express app
-// app instance
+// step 2 create express app and port
 const app = express();
-
-// port
 const port = process.env.PORT || 5000;
 
 // middlewares
