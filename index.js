@@ -78,7 +78,7 @@ async function run() {
 
       // create jwt token with secret
       const token = jwt.sign(userInformation, process.env.JWT_secret, {
-        expiresIn: "1hr",
+        expiresIn: "2hr",
       });
 
       // set the cookie
@@ -107,6 +107,15 @@ async function run() {
       console.log(data);
 
       const result = await assignmentsCollection.insertOne(data);
+      res.send(result);
+    });
+
+    // api for getting only one assignment's data
+    app.get("/assignments/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+
+      const result = await assignmentsCollection.findOne(filter);
       res.send(result);
     });
 
@@ -143,6 +152,36 @@ async function run() {
 
       // if emails match give permission to proceed to the update page
       res.send({ canProceed: true });
+    });
+
+    // api for checking if one user is requesting to deleted other user's assignment
+
+    app.post("/assignments/can-delete", verifyToken, async (req, res) => {
+      // step 1 find out who is requesting
+      const requestingUser = req.decodedUser.email;
+      // step 2 extract email for the document
+      const email = req.body.email;
+      // step 3 check if the emails are same
+      if (requestingUser !== email) {
+        res.status(403).send({ wrongUser: true });
+        return;
+      }
+
+      // if emails match give permission to proceed to the update page
+      res.send({ canProceed: true });
+    });
+
+    // api for updating assignment
+    app.put("/assignments/:id/update", async (req, res) => {
+      const id = req.params.id;
+      const dataToUpdateWith = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updatedAssignment = { $set: { ...dataToUpdateWith } };
+      const result = await assignmentsCollection.updateOne(
+        filter,
+        updatedAssignment
+      );
+      res.send(result);
     });
   } finally {
     // nothing
