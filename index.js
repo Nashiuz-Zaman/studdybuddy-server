@@ -43,18 +43,35 @@ const client = new MongoClient(uri, {
   },
 });
 
+// middlewares for verify token
+
+const verifyToken = (req, res, next) => {
+  const token = req.cookies.webToken;
+
+  if (!token) {
+    res.status(401).send({ noToken: true });
+    return;
+  }
+
+  // verify the token
+  jwt.verify(token, process.env.JWT_secret, function (err, decoded) {
+    if (err) {
+      res.status(401).send({ badToken: true });
+      return;
+    }
+
+    req.decodedUser = decoded;
+    next();
+  });
+};
+
 async function run() {
   try {
-    // Send a ping to confirm a successful connection
-    // await client.db("admin").command({ ping: 1 });
-    // console.log(
-    //   "Pinged your deployment. You successfully connected to MongoDB!"
-    // );
-
     // api for creating a jwt token when user has logged in
     app.post("/jwt", async (req, res) => {
       // step 1: get user email from request body
       const userInformation = req.body;
+
       // create jwt token with secret
       const token = jwt.sign(userInformation, process.env.JWT_secret, {
         expiresIn: "1hr",
@@ -68,19 +85,39 @@ async function run() {
 
       res.send({ message: "cookie set" });
     });
+
+    // api for deleting the cookie which has the token
+    app.get("/logout", async (req, res) => {
+      res.clearCookie("webToken", { maxAge: 0 });
+      res.send({ message: "Cookie deleted" });
+    });
+
+    // // test api
+    // app.get("/assignments", verifyToken, async (req, res) => {
+    //   res.send(req.decodedUser.email);
+    // });
+
+    // api for creating assignment in database
+    app.post("/assignments", verifyToken, async (req, res) => {
+      const data = req.body;
+      console.log(data);
+
+      const assignmentsCollection = client
+        .db("assignment11")
+        .collection("assignments");
+      const result = await assignmentsCollection.insertOne(data);
+      res.send(result);
+    });
   } finally {
-    // Ensures that the client will close when you finish/error
-    // await client.close();
+    // nothing
   }
 }
 run().catch(console.dir);
 
 // testing purpose get request
 app.get("/", (req, res) => {
-  res.send("server ok");
+  res.send("zarif says server ok");
 });
 
 // listen for the app
-app.listen(port, () => {
-  console.log(port);
-});
+app.listen(port);
