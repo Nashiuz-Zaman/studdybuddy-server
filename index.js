@@ -128,6 +128,22 @@ async function run() {
       res.send(result);
       return;
     });
+
+    // api for checking if one user is requesting to update other user's assignment
+    app.post("/assignments/can-update", verifyToken, async (req, res) => {
+      // step 1 find out who is requesting
+      const requestingUser = req.decodedUser.email;
+      // step 2 extract email for the document
+      const email = req.body.email;
+      // step 3 check if the emails are same
+      if (requestingUser !== email) {
+        res.status(403).send({ wrongUser: true });
+        return;
+      }
+
+      // if emails match give permission to proceed to the update page
+      res.send({ canProceed: true });
+    });
   } finally {
     // nothing
   }
