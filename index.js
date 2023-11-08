@@ -15,7 +15,7 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 // mongodb
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 // step 2 create express app and port
 const app = express();
@@ -43,8 +43,7 @@ const client = new MongoClient(uri, {
   },
 });
 
-// middlewares for verify token
-
+// middleware for verify token
 const verifyToken = (req, res, next) => {
   const token = req.cookies.webToken;
 
@@ -67,6 +66,11 @@ const verifyToken = (req, res, next) => {
 
 async function run() {
   try {
+    // collection
+    const assignmentsCollection = client
+      .db("assignment11")
+      .collection("assignments");
+
     // api for creating a jwt token when user has logged in
     app.post("/jwt", async (req, res) => {
       // step 1: get user email from request body
@@ -98,15 +102,31 @@ async function run() {
     // });
 
     // api for creating assignment in database
-    app.post("/assignments", verifyToken, async (req, res) => {
+    app.post("/assignments/create", verifyToken, async (req, res) => {
       const data = req.body;
       console.log(data);
 
-      const assignmentsCollection = client
-        .db("assignment11")
-        .collection("assignments");
       const result = await assignmentsCollection.insertOne(data);
       res.send(result);
+    });
+
+    // api for retreiving assignments data
+    app.post("/assignments", async (req, res) => {
+      const filter = req.body;
+
+      // if difficulty is all then send all the assignments
+      if (filter.difficulty === "all") {
+        const cursor = assignmentsCollection.find();
+        const result = await cursor.toArray();
+        res.send(result);
+        return;
+      }
+
+      // if difficulty is not all then send selected assignments
+      const cursor = assignmentsCollection.find(filter);
+      const result = await cursor.toArray();
+      res.send(result);
+      return;
     });
   } finally {
     // nothing
