@@ -66,10 +66,14 @@ const verifyToken = (req, res, next) => {
 
 async function run() {
   try {
-    // collection
+    // collections
     const assignmentsCollection = client
       .db("assignment11")
       .collection("assignments");
+
+    const submittedAssignmentsCollection = client
+      .db("assignment11")
+      .collection("submittedAssignments");
 
     // api for creating a jwt token when user has logged in
     app.post("/jwt", async (req, res) => {
@@ -183,6 +187,46 @@ async function run() {
       );
       res.send(result);
     });
+
+    // api for deleting assignment
+    app.delete("/assignments/:id/delete", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+
+      const result = await assignmentsCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    // api for creating submittedAssignments
+    app.post("/assignments/:id/submit", async (req, res) => {
+      const submittedAssignment = req.body;
+      const result = await submittedAssignmentsCollection.insertOne(
+        submittedAssignment
+      );
+
+      res.send(result);
+    });
+
+    // api for getting one user's own submitted assignments (submitted ones)
+    app.post("/submitted-assignments/self", async (req, res) => {
+      const userEmail = req.body.email;
+      const filter = { examineeEmail: userEmail };
+      const cursor = submittedAssignmentsCollection.find(filter);
+      const result = await cursor.toArray();
+      console.log(result);
+      res.send(result);
+    });
+
+    // api for getting all submitted assignments (pending)
+    app.get("/submitted-assignments/pending", async (req, res) => {
+      const filter = { status: "pending" };
+      const cursor = submittedAssignmentsCollection.find(filter);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    // // api for giving marks to the submitted assignment
+    // app.put()
   } finally {
     // nothing
   }
