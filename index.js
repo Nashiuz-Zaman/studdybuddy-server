@@ -24,7 +24,10 @@ const port = process.env.PORT || 5000;
 // middlewares
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: [
+      "https://studdybuddy-b3371.web.app",
+      "https://studdybuddy-b3371.firebaseapp.com/",
+    ],
     credentials: true,
   })
 );
@@ -88,7 +91,8 @@ async function run() {
       // set the cookie
       res.cookie("webToken", token, {
         httpOnly: true,
-        secure: false,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
       });
 
       res.send({ message: "cookie set" });
