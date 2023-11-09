@@ -24,10 +24,7 @@ const port = process.env.PORT || 5000;
 // middlewares
 app.use(
   cors({
-    origin: [
-      "https://studdybuddy-b3371.web.app",
-      "https://studdybuddy-b3371.firebaseapp.com/",
-    ],
+    origin: ["https://studdybuddy-b3371.web.app"],
     credentials: true,
   })
 );
@@ -85,14 +82,14 @@ async function run() {
 
       // create jwt token with secret
       const token = jwt.sign(userInformation, process.env.JWT_secret, {
-        expiresIn: "2hr",
+        expiresIn: "1hr",
       });
 
       // set the cookie
       res.cookie("webToken", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+        secure: true,
+        sameSite: "none",
       });
 
       res.send({ message: "cookie set" });
