@@ -226,7 +226,18 @@ async function run() {
     });
 
     // // api for giving marks to the submitted assignment
-    // app.put()
+    app.put("/evaluation", async (req, res) => {
+      const assignment = req.body;
+      const filter = { _id: new ObjectId(assignment._id) };
+      const { _id, ...newUpdatedAssignment } = assignment;
+
+      const updatedSubmittedAssigment = { $set: { ...newUpdatedAssignment } };
+      const result = await submittedAssignmentsCollection.updateOne(
+        filter,
+        updatedSubmittedAssigment
+      );
+      res.send(result);
+    });
   } finally {
     // nothing
   }
